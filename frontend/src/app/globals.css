@@ -1,0 +1,212 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: 255 255 255; /* White */
+  --color-secondary: 59 130 246; /* Steel Blue: #3B82F6 */
+  --color-accent: 16 185 129; /* Mint Emerald: #10B981 */
+  --color-background: 3 3 3; /* Obsidian Black: #030303 */
+  --color-card: 10 10 10; /* Charcoal Card: #0A0A0A */
+}
+
+body {
+  color: #ededed;
+  background-color: rgb(var(--color-background));
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+  background-image: 
+    radial-gradient(circle at 50% -100px, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 10% 80%, rgba(59, 130, 246, 0.01) 0%, transparent 30%);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+/* Realistic Glassmorphism Panel with tactile grain noise */
+.glass-panel {
+  position: relative;
+  background: rgba(10, 10, 10, 0.45);
+  backdrop-filter: blur(32px) saturate(140%);
+  -webkit-backdrop-filter: blur(32px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Base64 Tactile Glass Texture Grain Overlay */
+.glass-texture::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.012;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  z-index: 2;
+}
+
+.glass-panel-interactive {
+  position: relative;
+  background: rgba(10, 10, 10, 0.45);
+  backdrop-filter: blur(32px) saturate(140%);
+  -webkit-backdrop-filter: blur(32px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel-interactive:hover {
+  background: rgba(16, 16, 20, 0.55);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(255, 255, 255, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Bento Grid asymmetric arrangement styling */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .bento-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .bento-colspan-2 {
+    grid-column: span 2 / span 2;
+  }
+  .bento-rowspan-2 {
+    grid-row: span 2 / span 2;
+  }
+}
+
+/* Glass Input */
+.glass-input {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: white;
+  border-radius: 8px;
+  padding: 10px 14px;
+  outline: none;
+  font-size: 0.85rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-input:focus {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 0 24px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Ultra-subtle, high-end steel-blue and slate-gray radial gradients */
+.radial-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.cyan-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.secondary-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.015) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+/* Sophisticated Silver-to-Gray Typography Gradients */
+.gradient-text-primary {
+  background: linear-gradient(180deg, #FFFFFF 30%, #A1A1AA 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-accent {
+  background: linear-gradient(135deg, #FFFFFF 0%, #E4E4E7 50%, #52525B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Shimmer placeholder */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Premium Vercel button styling */
+.btn-premium {
+  position: relative;
+  background: #ffffff;
+  color: #000000;
+  border-radius: 8px;
+  font-weight: 500;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 10px 20px rgba(255, 255, 255, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-premium:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 15px 25px rgba(255, 255, 255, 0.08);
+}
+
+.btn-premium:active {
+  transform: scale(0.98);
+}

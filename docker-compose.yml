@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # PgVector PostgreSQL Database
+  db:
+    image: ankane/pgvector:v0.5.1
+    container_name: nexora-db
+    restart: always
+    environment:
+      POSTGRES_DB: nexora
+      POSTGRES_USER: nexora_admin
+      POSTGRES_PASSWORD: nexora_secure_password_99
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexora_admin -d nexora"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching API calls and rate-limiting
+  redis:
+    image: redis:7-alpine
+    container_name: nexora-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # FastAPI Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nexora-backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://nexora_admin:nexora_secure_password_99@db:5432/nexora
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=super_secret_nexora_jwt_key_987654321
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # Next.js 15 Frontend Client
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nexora-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

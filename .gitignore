@@ -1,0 +1,21 @@
+# Next.js build and dependency files
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/*.log
+
+# Python virtual environment and caching
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/*.db
+backend/.env
+
+# Global/System ignores
+.DS_Store
+Thumbs.db
+.next/
+node_modules/
+*.db
+*.local
