@@ -1,227 +1,156 @@
-# Nexora — AI-Powered Team Knowledge Platform
+# Nexora — Employer Service Operations
 
-<div align="center">
+A local employer workspace for service dispatch, prescribed medication schedules,
+administration outcomes, data integrity verification and reporting. Next.js,
+Tailwind and Radix UI connect to FastAPI and SQLite. Exactly five deterministic
+agents own the workflows; no paid APIs, remote inference or model downloads are
+required. Packages are downloaded only during installation.
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-square)](https://opensource.org/licenses/Apache-2.0)
-[![Next.js Version](https://img.shields.io/badge/Next.js-15.1.0-black.svg?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![FastAPI Version](https://img.shields.io/badge/FastAPI-0.109.0-009688.svg?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Docker Compose Ready](https://img.shields.io/badge/Docker_Compose-Ready-2496ED.svg?style=flat-square&logo=docker)](https://www.docker.com/)
-[![Local-First AI](https://img.shields.io/badge/AI-Local--First_&_Offline-10B981.svg?style=flat-square)](https://ollama.com/)
+## What is implemented
 
-**Nexora** is an enterprise-grade, self-hosted AI Second Brain for teams. It consolidates scattered wikis, uploaded documents, conversation history, and templates into an interactive, glassmorphic workspace powered by offline local semantic AI.
+| Agent | Responsibility and bound workflow |
+| --- | --- |
+| Employer Intake & Routing | Account-owned employer workspaces, client intake, validated request routing |
+| Medication & Compliance | One prescribed scheduled dose per record; exact dose/unit matching; immutable recorded outcomes |
+| Service Execution | Client-linked services, worker assignment, validated status transitions |
+| Data Integrity & Audit | Pre-write and pre-commit verification, version conflicts, transaction rollback, hash-linked before/after history |
+| Reporting & Insights | Service counts and adherence calculated from verified employer records |
 
-[Key Features](#-key-features) • [System Architecture](#-system-architecture) • [Getting Started](#-getting-started) • [Docker Deployment](#-docker-deployment) • [GitHub Publishing Guide](#-github-publishing-guide)
+The agent registry is in backend/agents.py. Authenticated writes enter
+POST /api/operations and execute synchronously through registered tools.
+POST /api/agents/dispatch is an explicitly read-only free-text planning endpoint;
+it cannot create clinical or operational records. GET /api/agents lists the five
+roles, tool bindings and fallbacks.
 
-</div>
+The dashboard includes Overview, Services, Medications, Clients, Agents, Audit
+trail and Insights. It supports light/dark themes, mobile and collapsible
+navigation, keyboard-accessible Radix dialogs, real sign-in, loading states,
+errors and explicit refresh. Agent states reflect recent persisted actions or
+the latest audit/report result, not simulated background workers.
 
----
+## Start locally (Windows PowerShell)
 
-## 🎨 Design Philosophy
+Use Python 3.10+ and Node.js 22+. Open two terminals from the repository.
 
-Nexora is designed with a premium, high-end developer aesthetic inspired by Stripe, Vercel, and Linear:
-- **Obsidian & Silver:** Deep obsidian black canvases (`#030303`) paired with zinc-steel borders, sharp typography, and subtle steel-blue status indicators.
-- **Frosted Glass Panels:** Real-time backdrop-blur saturate overlays featuring a tactile SVG grain noise texture to simulate premium physical layers.
-- **Fluid Animations:** Spring-physics page entries, scroll reveals, active tab horizontal slides, and mouse-spotlight hover reflections powered by **Framer Motion**.
+Backend:
 
----
+~~~powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+$env:JWT_SECRET = 'replace-with-a-long-random-private-secret'
+.\venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
+~~~
 
-## ⚡ Key Features
+Frontend:
 
-* **📝 Notion-Style Wiki Workspace:** A rich markdown editor supporting SOP & meeting note templates, nested document hierarchies, edit logs, and collaborative comment sections.
-* **📂 Ingestion & Document Library:** Multi-format file uploader (PDF, DOCX, PPTX, TXT) that splits documents into semantic chunks, encodes them into vector representations, and lists metadata status.
-* **🔍 Intent-Based Semantic Search:** A cosine similarity search engine that reads the contextual intent of queries, matching files in under 20ms and providing source-level text snippets.
-* **🤖 Context-Aware AI Chat:** An interactive RAG (Retrieval-Augmented Generation) assistant that answers queries based on your uploaded documentation, citing references and allowing you to save conversations directly into SOP Wiki pages.
-* **📊 Knowledge Gap Analytics:** A dashboard tracker compiling top user queries, identifying queries with 0% semantic matches, and prompting administrators to generate pages for missing information blocks.
-* **🕸️ Interactive Relationship Graph:** A physics-simulated node network visualizing overlapping topics, page references, and metadata tags.
-* **🛡️ Admin Console (RBAC & Audit):** Comprehensive configuration panels listing user access roles, multi-factor authentication toggles, and secure AES-256 audit log downloads.
+~~~powershell
+cd frontend
+npm ci
+npm run dev
+~~~
 
----
+Open http://localhost:3000. Create an account, create an employer workspace,
+add a client, and then dispatch a service or schedule a prescribed dose.
 
-## 🏗️ System Architecture
+The API runs at http://localhost:8000, with interactive schemas at /docs and
+the process/database health check at /api/health. Browser requests default to
+that local API. Set NEXT_PUBLIC_API_URL before building the frontend to change it.
+CORS_ORIGINS is a comma-separated list of trusted browser origins and defaults
+to http://localhost:3000.
 
-```text
-                                  ┌────────────────────────┐
-                                  │   Next.js 15 Client    │
-                                  │ (Zustand State Engine) │
-                                  └───────────┬────────────┘
-                                              │
-                                       REST / JSON API
-                                              │
-                                              ▼
-                                  ┌────────────────────────┐
-                                  │   FastAPI Gateway      │
-                                  │  (JWT Auth & Routing)  │
-                                  └───────────┬────────────┘
-                                              │
-                    ┌─────────────────────────┴─────────────────────────┐
-                    ▼                                                   ▼
-        ┌───────────────────────┐                           ┌───────────────────────┐
-        │   Local AI Engine     │                           │   Database Session    │
-        │ (SentenceTransformer) │                           │  (SQLAlchemy Engine)  │
-        └───────────┬───────────┘                           └───────────┬───────────┘
-                    │                                                   │
-        ┌───────────┴───────────┐                           ┌───────────┴───────────┐
-        │   Ollama Local LLM    │                           │ SQLite (Local Dev) /  │
-        │ (llama3 / offline)    │                           │ PostgreSQL + pgvector │
-        └───────────────────────┘                           └───────────────────────┘
-```
+On macOS/Linux use python3, venv/bin/python and export JWT_SECRET=... .
+With no JWT_SECRET, the API generates a temporary secret and tokens become
+invalid after restart. Supply a private stable secret for normal use. Tokens
+expire after one hour. The browser stores its token for the current tab session.
 
-- **Frontend Client (`/frontend`):** A Next.js 15 Single Page Application styled with TailwindCSS, globals.css glass panels, and Framer Motion. State management is reactive via a Zustand global store.
-- **FastAPI Gateway (`/backend`):** An asynchronous Python API handling authentication, document tokenization, wiki management, and database query executions.
-- **Semantic Engine (`ai_engine.py`):** Encodes text into 384-dimensional dense vectors using a local `all-MiniLM-L6-v2` transformer model running entirely offline on CPU.
-- **Database Layer:** Uses a lightweight SQLAlchemy engine that defaults to a local SQLite schema for zero-setup development, and connects to a production PostgreSQL cluster with `pgvector` index support when deployed in Docker.
+## Medication and data integrity contract
 
----
+- Enter an existing prescribed dose, unit, route, prescriber, instructions and
+  scheduled time. Browser-local times are converted to explicit UTC timestamps.
+- Dosages are finite positive Decimals with up to four decimal places, stored
+  as strings to avoid floating-point drift. The application does not determine
+  clinically appropriate doses or check drug interactions.
+- An outcome is given, missed or refused. Given must exactly match the recorded
+  order's dose and unit; missed/refused must record zero administered dose.
+- Each scheduled dose accepts one outcome. The outcome and its order then become
+  immutable. Create a new schedule for the next dose; recurrence and correction
+  workflows are not implemented.
+- Updates require the current version and cannot reassign the client. Stale
+  writes return HTTP 409. Duplicate request IDs return 409; the form keeps the
+  same ID when retrying so a lost response cannot silently duplicate a write.
+- Operational transactions acquire SQLite's write lock before reading versions.
+  The audit agent checks schemas, references, record snapshots, medication
+  outcomes and the hash chain before mutation and again before commit.
+  Failure rolls back the record and audit event together.
+- Reports use one consistent database snapshot. Integrity failure blocks
+  reporting instead of displaying potentially corrupted metrics.
+- Audit events include actor, timestamp, request ID and complete before/after
+  snapshots. The UI shows the most recent 50; verification covers all events.
+  Hash linking detects corruption, but is not a substitute for trusted backups
+  or protection against someone who controls and rewrites the entire database.
 
-## 🛠️ Folder Layout
+Adherence = due scheduled doses recorded given / all scheduled doses due now.
+Cancelled doses are excluded. No due doses displays a dash, not a fabricated
+percentage. This is a record-based operational measure, not clinical certification.
 
-```text
-nexora/
-├── docker-compose.yml       # Production-ready PostgreSQL/PgVector/Redis stack
-├── README.md                # General system handbook
-├── frontend/                # NextJS 15 React application
-│   ├── package.json
-│   ├── tailwind.config.js   # Monochrome zinc theme colors & properties
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── layout.tsx
-│   │   │   ├── globals.css  # Frosted glass, animations, and custom scrollbars
-│   │   │   ├── page.tsx     # Animated premium Hero landing page
-│   │   │   ├── auth/        # Credentials entry & step-flip MFA login
-│   │   │   └── dashboard/   # Main app canvas (Wikis, Docs, Chat, Graph, Admin)
-│   │   ├── components/
-│   │   │   ├── Sidebar.tsx  # Workspace navigation and API mode switcher
-│   │   │   ├── GlassCard.tsx # Framer Motion card with spotlight tracking
-│   │   │   └── NexoraLogo.tsx # 3D geometric isometric glass prism symbol
-│   │   └── store/
-│   │       └── useNexoraStore.ts # Central Zustand client state manager
-└── backend/                 # FastAPI Python application
-    ├── requirements.txt
-    ├── main.py              # REST routing endpoints (Wiki, Auth, Ingest, Search)
-    ├── database.py          # Session engines (SQLite local fallback / PostgreSQL)
-    ├── models.py            # SQLite & SQLalchemy table definitions
-    ├── schemas.py           # Pydantic validation structures
-    ├── auth.py              # JWT tokens, password hashing, and RBAC rules
-    └── ai_engine.py         # local SentenceTransformers & Ollama local bridge
-```
+## Storage and compatibility
 
----
+SQLite defaults to backend/nexora.db when the API is launched from backend.
+Accounts own separate employer workspaces; every operational write and dashboard
+read checks ownership. Workforce assignment currently records a worker name;
+shared memberships, worker availability and external dispatch integrations are
+outside this implementation.
 
-## 🚀 Getting Started
+Schema creation is additive. Legacy user/wiki/document tables and existing
+database files are retained; old unsecured wiki/document APIs and the simulated
+frontend are retired. Existing bcrypt password hashes remain readable.
+POST /api/chat returns 410. No medication tables existed in the original commit,
+so medication tracking was added rather than migrated.
 
-Nexora supports a **Hybrid client-side fallback**. By default, the application runs entirely inside the browser using Zustand-preseeded mock data. You can explore the landing page, write wikis, view the interactive relationship graph, and chat with a mock agent with zero databases or services required.
+Back up an existing database before deployment changes. If the old PostgreSQL
+Compose stack was used, export and migrate its records before adopting SQLite.
+The refactor does not delete or automatically convert PostgreSQL volumes.
 
-### 1. Run the Frontend Client
-Ensure you have [Node.js](https://nodejs.org/) installed.
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install the package dependencies:
-   ```bash
-   npm install
-   ```
-3. Launch the development server:
-   ```bash
-   npm run dev
-   ```
-4. Open your browser and navigate to **`http://localhost:3000`**.
+## Verification
 
-### 2. Run the Local Python Server (Optional)
-To query actual semantic embeddings and test local PDF file uploads on CPU:
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Setup and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   # On Windows:
-   venv\Scripts\activate
-   # On macOS/Linux:
-   source venv/bin/activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Start the server:
-   ```bash
-   python main.py
-   ```
-5. Server starts on **`http://localhost:8000`**. Inside the app sidebar, toggle the server selector to **"LOCAL API"** to route queries directly to the active python instance.
+~~~powershell
+cd backend
+.\venv\Scripts\python.exe -m unittest discover -s tests -v
+.\venv\Scripts\python.exe -m compileall -q agents.py ai_engine.py main.py operations.py auth.py models.py schemas.py database.py
+.\venv\Scripts\python.exe -m pip check
+cd ../frontend
+npm run typecheck
+npm run build
+~~~
 
-### 3. Hook up Offline Local LLMs (Optional)
-To query a fully private generative model:
-1. Download and run [Ollama](https://ollama.com).
-2. Pull your preferred conversational model:
-   ```bash
-   ollama pull llama3
-   ```
-3. Nexora's `ai_engine.py` will automatically detect Ollama running on `http://localhost:11434` and route RAG Chat queries to it for local, offline context-aware answers.
+Tests use isolated temporary databases. Coverage includes all five routing
+contracts, API authentication, employer isolation, medication update history,
+invalid doses, duplicate outcomes, stale versions, simultaneous writes, rollback,
+audit corruption, and the integrated service → medication → audit → reporting
+workflow. See docs/VERIFICATION.md for results and browser checks.
 
----
+## Containers
 
-## 🐳 Docker Deployment
+~~~powershell
+$env:JWT_SECRET = 'replace-with-a-long-random-private-secret'
+docker compose config --quiet
+docker compose up --build
+~~~
 
-To spin up a containerized production environment (including pgvector PostgreSQL and Redis caching), run:
-```bash
-docker-compose up --build
-```
-This launches:
-- **db:** PostgreSQL database with `pgvector` indexing (Port `5432`)
-- **redis:** Redis caching service (Port `6379`)
-- **backend:** FastAPI API micro-service (Port `8000`)
-- **frontend:** Next.js SSR client (Port `3000`)
+Compose runs the frontend and API with a persistent SQLite named volume.
+Ports 3000 and 8000 are bound to host loopback. The API listens on all interfaces
+inside its container; backend health gates frontend startup. Docker build
+contexts exclude local databases, environments and caches.
+Do not use docker compose down -v if you want to retain the database.
 
----
+Local workflows and Compose configuration were verified. Container startup was
+not verified because the host Docker daemon was unavailable.
 
-## 📤 GitHub Publishing Guide
+## Sequential delivery
 
-To push this project to your GitHub account:
-
-### 1. Initialize Git Repository
-In the root directory of the project, run:
-```bash
-git init
-```
-
-### 2. Configure Git Ignores
-Create a `.gitignore` file in the root directory if it does not exist, or ensure the following paths are ignored:
-```text
-# Node dependencies & caches
-node_modules/
-.next/
-out/
-build/
-*.log
-
-# Python dependencies & environments
-venv/
-__pycache__/
-*.pyc
-.env
-*.db
-```
-
-### 3. Commit the Code
-Stage and commit your local workspace files:
-```bash
-git add .
-git commit -m "feat: init Nexora platform with premium design and smooth transitions"
-```
-
-### 4. Push to GitHub
-1. Create a new repository on [GitHub](https://github.com/new). Leave it empty (do not add a README, license, or gitignore).
-2. Link your local repository to GitHub and push:
-   ```bash
-   # Rename the default branch to main
-   git branch -M main
-
-   # Add your GitHub repository URL as remote origin
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-
-   # Push to the main branch
-   git push -u origin main
-   ```
-3. Refresh your GitHub repository page to see your complete codebase online!
+Phase 1 was written and passed its eight tests, Python compilation, strict
+TypeScript checking and production build before Phase 2 began. Its historical
+audit is retained in docs/PHASE_1_AUDIT.md. Phase 2 added transactional records and
+passed the integrated suite before the Phase 3 UI replacement. Phase 4 verified
+the local workflow, browser behavior and final build.
